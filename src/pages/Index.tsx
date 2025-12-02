@@ -48,13 +48,29 @@ const Index = () => {
     }
   };
 
+  const [paymentMethod, setPaymentMethod] = useState<'yukassa' | 'transfer' | 'sberbank'>('yukassa');
+
   const handlePayment = () => {
     const extractedNick = extractNickname(nickname);
     if (!extractedNick || extractedNick.length < 8 || !robuxAmount) {
       alert('Пожалуйста, заполните все поля! Ник должен содержать минимум 8 символов после @');
       return;
     }
-    alert(`Переход на оплату через ЮКассу...\nНик: ${extractedNick}\nКоличество робуксов: ${robuxAmount}\nСумма: ${rublesAmount}₽`);
+    
+    let paymentText = '';
+    switch(paymentMethod) {
+      case 'yukassa':
+        paymentText = 'Переход на оплату через ЮКассу...';
+        break;
+      case 'transfer':
+        paymentText = 'Реквизиты для перевода:\nКарта: 2202 2063 6855 0716\nПолучатель: Александр П.';
+        break;
+      case 'sberbank':
+        paymentText = 'Оплата через СберБанк Онлайн:\nТелефон: +7 (999) 123-45-67\nИмя: Александр';
+        break;
+    }
+    
+    alert(`${paymentText}\n\nНик: ${extractedNick}\nКоличество робуксов: ${robuxAmount}\nСумма: ${rublesAmount}₽`);
   };
 
   const handleAddReview = () => {
@@ -273,13 +289,63 @@ const Index = () => {
                 </div>
               </div>
 
+              <div className="space-y-3">
+                <label className="text-sm font-medium">Способ оплаты:</label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <Card
+                    onClick={() => setPaymentMethod('yukassa')}
+                    className={`cursor-pointer transition-all hover:scale-105 ${
+                      paymentMethod === 'yukassa' 
+                        ? 'border-primary bg-primary/10 neon-glow' 
+                        : 'border-primary/20 bg-card/50'
+                    }`}
+                  >
+                    <CardContent className="p-4 flex flex-col items-center gap-2">
+                      <Icon name="CreditCard" size={32} className="text-primary" />
+                      <span className="font-semibold text-sm">ЮКасса</span>
+                      <span className="text-xs text-muted-foreground text-center">Карты, СБП</span>
+                    </CardContent>
+                  </Card>
+
+                  <Card
+                    onClick={() => setPaymentMethod('transfer')}
+                    className={`cursor-pointer transition-all hover:scale-105 ${
+                      paymentMethod === 'transfer' 
+                        ? 'border-primary bg-primary/10 neon-glow' 
+                        : 'border-primary/20 bg-card/50'
+                    }`}
+                  >
+                    <CardContent className="p-4 flex flex-col items-center gap-2">
+                      <Icon name="ArrowRightLeft" size={32} className="text-primary" />
+                      <span className="font-semibold text-sm">Перевод</span>
+                      <span className="text-xs text-muted-foreground text-center">На карту</span>
+                    </CardContent>
+                  </Card>
+
+                  <Card
+                    onClick={() => setPaymentMethod('sberbank')}
+                    className={`cursor-pointer transition-all hover:scale-105 ${
+                      paymentMethod === 'sberbank' 
+                        ? 'border-primary bg-primary/10 neon-glow' 
+                        : 'border-primary/20 bg-card/50'
+                    }`}
+                  >
+                    <CardContent className="p-4 flex flex-col items-center gap-2">
+                      <Icon name="Building2" size={32} className="text-primary" />
+                      <span className="font-semibold text-sm">СберБанк</span>
+                      <span className="text-xs text-muted-foreground text-center">Онлайн</span>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+
               <Button 
                 onClick={handlePayment}
                 size="lg"
                 className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-all neon-glow"
               >
-                <Icon name="CreditCard" size={24} className="mr-2" />
-                Оплатить через ЮКассу
+                <Icon name={paymentMethod === 'yukassa' ? 'CreditCard' : paymentMethod === 'transfer' ? 'ArrowRightLeft' : 'Building2'} size={24} className="mr-2" />
+                {paymentMethod === 'yukassa' ? 'Оплатить через ЮКассу' : paymentMethod === 'transfer' ? 'Получить реквизиты' : 'Оплатить через СберБанк'}
               </Button>
 
               <p className="text-xs text-center text-muted-foreground">
