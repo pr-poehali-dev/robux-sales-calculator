@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -8,6 +8,7 @@ import Icon from '@/components/ui/icon';
 
 const Index = () => {
   const [nickname, setNickname] = useState('');
+  const [robloxAvatar, setRobloxAvatar] = useState('');
   const [calculatorMode, setCalculatorMode] = useState<'robux' | 'rubles'>('robux');
   const [robuxAmount, setRobuxAmount] = useState('');
   const [rublesAmount, setRublesAmount] = useState('');
@@ -16,6 +17,45 @@ const Index = () => {
   const [newReview, setNewReview] = useState({ name: '', rating: 5, text: '' });
   const [userReviews, setUserReviews] = useState<Array<{ name: string; rating: number; text: string; avatar: string }>>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  useEffect(() => {
+    const savedReviews = localStorage.getItem('gplrobux_reviews');
+    if (savedReviews) {
+      setUserReviews(JSON.parse(savedReviews));
+    }
+  }, []);
+
+  useEffect(() => {
+    const fetchRobloxAvatar = async () => {
+      const extractedNick = extractNickname(nickname);
+      if (extractedNick && extractedNick.length >= 3) {
+        try {
+          const userResponse = await fetch(`https://users.roblox.com/v1/users/search?keyword=${extractedNick}&limit=1`);
+          const userData = await userResponse.json();
+          if (userData.data && userData.data[0]) {
+            const userId = userData.data[0].id;
+            const avatarResponse = await fetch(`https://thumbnails.roblox.com/v1/users/avatar-headshot?userIds=${userId}&size=150x150&format=Png`);
+            const avatarData = await avatarResponse.json();
+            if (avatarData.data && avatarData.data[0]) {
+              setRobloxAvatar(avatarData.data[0].imageUrl);
+            }
+          } else {
+            setRobloxAvatar('');
+          }
+        } catch (error) {
+          setRobloxAvatar('');
+        }
+      } else {
+        setRobloxAvatar('');
+      }
+    };
+
+    const debounce = setTimeout(() => {
+      fetchRobloxAvatar();
+    }, 500);
+
+    return () => clearTimeout(debounce);
+  }, [nickname]);
 
   const extractNickname = (input: string) => {
     const atIndex = input.indexOf('@');
@@ -80,7 +120,9 @@ const Index = () => {
     }
     const avatars = ['🎮', '🏗️', '⭐', '💎', '🎯', '🚀', '🔥', '⚡'];
     const randomAvatar = avatars[Math.floor(Math.random() * avatars.length)];
-    setUserReviews([...userReviews, { ...newReview, avatar: randomAvatar }]);
+    const updatedReviews = [...userReviews, { ...newReview, avatar: randomAvatar }];
+    setUserReviews(updatedReviews);
+    localStorage.setItem('gplrobux_reviews', JSON.stringify(updatedReviews));
     setNewReview({ name: '', rating: 5, text: '' });
     setIsDialogOpen(false);
   };
@@ -148,9 +190,13 @@ const Index = () => {
             <span className="text-sm font-medium text-primary">Надёжная покупка робуксов</span>
           </div>
           
-          <h1 className="text-6xl md:text-8xl font-extrabold mb-6 neon-text bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-fade-in">
+          <h1 className="text-6xl md:text-8xl font-extrabold mb-4 neon-text bg-gradient-to-r from-primary via-secondary to-primary bg-clip-text text-transparent animate-fade-in">
             GPLrobux
           </h1>
+          
+          <p className="text-lg md:text-xl text-muted-foreground/80 mb-6 italic">
+            sammy разработчик роблокса
+          </p>
           
           <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-2xl mx-auto">
             Надёжная доставка робуксов по выгодному курсу. 
@@ -208,13 +254,20 @@ const Index = () => {
                   <Icon name="User" size={16} className="text-primary" />
                   Игровой ник Roblox
                 </label>
-                <Input
-                  type="text"
-                  placeholder="@ваш_ник или просто ник"
-                  value={nickname}
-                  onChange={(e) => handleNicknameChange(e.target.value)}
-                  className="h-12 text-lg border-primary/30 focus:border-primary focus:ring-primary"
-                />
+                <div className="flex gap-3 items-center">
+                  <Input
+                    type="text"
+                    placeholder="@ваш_ник или просто ник"
+                    value={nickname}
+                    onChange={(e) => handleNicknameChange(e.target.value)}
+                    className="h-12 text-lg border-primary/30 focus:border-primary focus:ring-primary flex-1"
+                  />
+                  {robloxAvatar && (
+                    <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-primary neon-glow">
+                      <img src={robloxAvatar} alt="Roblox Avatar" className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                </div>
                 {nickname && (
                   <p className="text-xs text-muted-foreground">
                     Будет использован: {extractNickname(nickname)}
@@ -342,7 +395,7 @@ const Index = () => {
               <Button 
                 onClick={handlePayment}
                 size="lg"
-                className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-secondary hover:opacity-90 transition-all neon-glow"
+                className="w-full h-14 text-lg font-semibold gradient-purple-blue hover:opacity-90 transition-all neon-glow"
               >
                 <Icon name={paymentMethod === 'yukassa' ? 'CreditCard' : paymentMethod === 'transfer' ? 'ArrowRightLeft' : 'Building2'} size={24} className="mr-2" />
                 {paymentMethod === 'yukassa' ? 'Оплатить через ЮКассу' : paymentMethod === 'transfer' ? 'Получить реквизиты' : 'Оплатить через СберБанк'}
@@ -415,7 +468,7 @@ const Index = () => {
                       className="border-primary/30 min-h-[100px]"
                     />
                   </div>
-                  <Button onClick={handleAddReview} className="w-full neon-glow">
+                  <Button onClick={handleAddReview} className="w-full gradient-purple-blue neon-glow">
                     <Icon name="Send" size={18} className="mr-2" />
                     Отправить отзыв
                   </Button>

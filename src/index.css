@@ -88,4 +88,8 @@
       0 0 40px hsl(var(--primary) / 0.3),
       0 0 60px hsl(var(--primary) / 0.2);
   }
+
+  .gradient-purple-blue {
+    background: linear-gradient(135deg, #8b5cf6 0%, #3b82f6 100%);
+  }
 }
